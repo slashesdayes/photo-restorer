@@ -1,58 +1,55 @@
 export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const { image } = req.body;
     const token = process.env.REPLICATE_API_TOKEN;
 
-    if (!token) {
-        return res.status(500).json({ error: 'API token not configured' });
-    }
+    if (!token) return res.status(500).json({ error: 'مفتاح API غير معرف في Vercel' });
 
     try {
-        // استخدام نموذج CodeFormer الممتاز والموثوق لترميم الوجوه والصور القديمة
+        // إنشاء طلب ترميم الوجوه والصور
         const response = await fetch("https://api.replicate.com/v1/predictions", {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
+                "Authorization": `Token ${token}`,
+                "Content-Type": "application/json",
+                "Prefer": "respond-async"
             },
             body: JSON.stringify({
-                version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db731439075d496e9",
+                version: "92836086e3c34846f513811502455e76470d041130e1357b9f08625e2e8e7a07",
                 input: {
-                    image: image,
-                    codeformer_fidelity: 0.7,
-                    background_enhance: true,
-                    face_upsample: true,
-                    upscale: 2
+                    img: image,
+                    version: "v1.4",
+                    scale: 2
                 }
             })
         });
 
         const data = await response.json();
 
-        if (data.error) {
-            return res.status(400).json({ error: data.error });
-        }
+        if (data.error) return res.status(400).json({ error: data.error });
 
-        // الاستعلام للحصول على الصورة بعد تجهيزها
+        // الانتظار السريع لاستلام الصورة المرممة
+        let statusUrl = data.urls.get;
         let prediction = data;
-        while (prediction.status !== "succeeded" && prediction.status !== "failed") {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            const checkRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-                headers: { "Authorization": `Bearer ${token}` }
+
+        for (let i = 0; i < 25; i++) {
+            if (prediction.status === "succeeded") {
+                return res.status(200).json({ output: prediction.output });
+            }
+            if (prediction.status === "failed") {
+                return res.status(500).json({ error: "فشلت معالجة الصورة" });
+            }
+            await new Promise(r => setTimeout(r, 1000));
+            const check = await fetch(statusUrl, {
+                headers: { "Authorization": `Token ${token}` }
             });
-            prediction = await checkRes.json();
+            prediction = await check.json();
         }
 
-        if (prediction.status === "succeeded") {
-            return res.status(200).json({ output: prediction.output });
-        } else {
-            return res.status(500).json({ error: 'Processing failed' });
-        }
+        return res.status(504).json({ error: "استغرق التعديل وقتاً أطول من المتوقع، حاول مجدداً" });
 
-    } catch (error) {
-        return res.status(500).json({ error: error.message });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
     }
 }
