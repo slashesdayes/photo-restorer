@@ -67,19 +67,22 @@
 
     <button id="processBtn" class="btn" onclick="startProcess()" disabled>بدء الترميم 🚀</button>
 
-    <div id="loading">⏳ جاري المعالجة...</div>
+    <div id="loading">⏳ جاري معالجة الصورة بالذكاء الاصطناعي...</div>
 
     <div class="preview" id="previewBox">
-        <p style="text-align: right; color: #94A3B8;">الصورة المختارة:</p>
+        <p style="text-align: right; color: #94A3B8;">النتيجة:</p>
         <img id="imgResult" src="" alt="Result">
     </div>
 </div>
 
 <script>
+    let rawImageData = "";
+
     function handleFile(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = function(e) {
+                rawImageData = e.target.result;
                 document.getElementById('imgResult').src = e.target.result;
                 document.getElementById('previewBox').style.display = 'block';
                 document.getElementById('processBtn').disabled = false;
@@ -96,16 +99,18 @@
             const response = await fetch('/api/process', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: document.getElementById('imgResult').src })
+                body: JSON.stringify({ image: rawImageData })
             });
             const data = await response.json();
-            if (data.output) {
-                document.getElementById('imgResult').src = Array.isArray(data.output) ? data.output[0] : data.output;
+            
+            if (response.ok && data.output) {
+                const finalImg = Array.isArray(data.output) ? data.output[0] : data.output;
+                document.getElementById('imgResult').src = finalImg;
             } else {
-                alert("سبب الخطأ: " + (data.error || JSON.stringify(data)));
+                alert("تفاصيل الخطأ الدقيقة: " + (data.error || JSON.stringify(data)));
             }
         } catch (e) {
-            alert("حدث خطأ في الاتصال: " + e.message);
+            alert("خطأ في الاتصال: " + e.message);
         } finally {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('processBtn').disabled = false;
