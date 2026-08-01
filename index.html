@@ -1,1 +1,87 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ترميم وتلوين الصور القديمة</title>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; text-align: center; }
+    .card { background: #1e293b; max-width: 500px; margin: 20px auto; padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    h1 { font-size: 1.5rem; color: #38bdf8; margin-bottom: 8px; }
+    p { font-size: 0.9rem; color: #94a3b8; }
+    .btn-group { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+    .btn-group button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #334155; color: #fff; transition: 0.3s; }
+    .btn-group button.active { background: #0284c7; }
+    input[type="file"] { display: none; }
+    .file-label { display: block; padding: 16px; border: 2px dashed #38bdf8; border-radius: 12px; cursor: pointer; background: #0f172a; color: #38bdf8; font-weight: bold; margin-bottom: 15px; }
+    .action-btn { width: 100%; padding: 14px; border: none; border-radius: 8px; background: #22c55e; color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer; }
+    .action-btn:disabled { background: #475569; cursor: not-allowed; }
+    .ad-space { background: #334155; border: 1px dashed #64748b; padding: 15px; margin: 20px 0; border-radius: 8px; color: #cbd5e1; font-size: 0.8rem; }
+    #result-img { max-width: 100%; border-radius: 12px; margin-top: 15px; display: none; }
+    .download-btn { display: none; margin-top: 10px; width: 100%; padding: 12px; background: #38bdf8; color: #0f172a; text-decoration: none; border-radius: 8px; font-weight: bold; }
+  </style>
+</head>
+<body>
 
+  <div class="card">
+    <h1>✨ ترميم وتلوين الصور القديمة</h1>
+    <p>بضغطة زر وبدون علامة مائية - مجاناً 100%</p>
+
+    <!-- مساحة الإعلان الأول -->
+    <div class="ad-space">مساحة إعلانية (Google AdSense)</div>
+
+    <!-- خيارات الخدمة -->
+    <div class="btn-group">
+      <button id="btn-enhance" class="active" onclick="setMode('enhance')">توضيح الصورة 🔍</button>
+      <button id="btn-colorize" onclick="setMode('colorize')">تلوين الصورة 🎨</button>
+    </div>
+
+    <!-- رفع الصورة -->
+    <label for="image-input" class="file-label" id="file-label">📸 اضغط هنا لاختيار الصورة من جوالك</label>
+    <input type="file" id="image-input" accept="image/*" onchange="previewFile()">
+
+    <button id="submit-btn" class="action-btn" onclick="processImage()" disabled>ابدأ المعالجة الأن 🚀</button>
+
+    <!-- مساحة الإعلان الثاني -->
+    <div class="ad-space">مساحة إعلانية (تظهر أثناء الانتظار)</div>
+
+    <!-- النتيجة -->
+    <img id="result-img" alt="النتيجة">
+    <a id="download-link" class="download-btn" download="restored-image.jpg">تحميل الصورة بجودة عالية ⬇️</a>
+  </div>
+
+  <script>
+    let currentMode = 'enhance';
+    let selectedFile = null;
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btn-enhance').classList.toggle('active', mode === 'enhance');
+      document.getElementById('btn-colorize').classList.toggle('active', mode === 'colorize');
+    }
+
+    function previewFile() {
+      const fileInput = document.getElementById('image-input');
+      if (fileInput.files.length > 0) {
+        selectedFile = fileInput.files[0];
+        document.getElementById('file-label').innerText = "تم اختيار: " + selectedFile.name;
+        document.getElementById('submit-btn').disabled = false;
+      }
+    }
+
+    function processImage() {
+      const btn = document.getElementById('submit-btn');
+      btn.innerText = "جاري المعالجة... انتظر 5 ثوانٍ ⏳";
+      btn.disabled = true;
+
+      setTimeout(() => {
+        alert("تم رفع الصفحة بنجاح!");
+        btn.innerText = "ابدأ المعالجة الأن 🚀";
+        btn.disabled = false;
+      }, 1500);
+    }
+  </script>
+
+</body>
+</html>
