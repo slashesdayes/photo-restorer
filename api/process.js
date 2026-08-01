@@ -7,13 +7,11 @@ export default async function handler(req, res) {
     if (!token) return res.status(500).json({ error: 'مفتاح API غير معرف في Vercel' });
 
     try {
-        // إنشاء طلب ترميم الوجوه والصور
         const response = await fetch("https://api.replicate.com/v1/predictions", {
             method: "POST",
             headers: {
                 "Authorization": `Token ${token}`,
-                "Content-Type": "application/json",
-                "Prefer": "respond-async"
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
                 version: "92836086e3c34846f513811502455e76470d041130e1357b9f08625e2e8e7a07",
@@ -27,27 +25,31 @@ export default async function handler(req, res) {
 
         const data = await response.json();
 
-        if (data.error) return res.status(400).json({ error: data.error });
+        // في حال وجود خطأ من سيرفر Replicate
+        if (!response.ok || data.error || !data.urls) {
+            return res.status(400).json({ error: data.error || data.detail || 'فشل البدء في المعالجة' });
+        }
 
-        // الانتظار السريع لاستلام الصورة المرممة
-        let statusUrl = data.urls.get;
+        // الاستعلام بأمان
+        const statusUrl = data.urls.get;
         let prediction = data;
 
-        for (let i = 0; i < 25; i++) {
+        for (let i = 0; i < 30; i++) {
             if (prediction.status === "succeeded") {
                 return res.status(200).json({ output: prediction.output });
             }
             if (prediction.status === "failed") {
-                return res.status(500).json({ error: "فشلت معالجة الصورة" });
+                return res.status(500).json({ error: prediction.error || "فشلت عملية الترميم" });
             }
             await new Promise(r => setTimeout(r, 1000));
+            
             const check = await fetch(statusUrl, {
                 headers: { "Authorization": `Token ${token}` }
             });
             prediction = await check.json();
         }
 
-        return res.status(504).json({ error: "استغرق التعديل وقتاً أطول من المتوقع، حاول مجدداً" });
+        return res.status(504).json({ error: "انتهت المهلة، حاول مجدداً" });
 
     } catch (err) {
         return res.status(500).json({ error: err.message });
