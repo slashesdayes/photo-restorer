@@ -1,1 +1,103 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مُرمم الصور بالذكاء الاصطناعي</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #0F172A;
+            color: #F8FAFC;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        h1 { color: #818CF8; font-size: 1.5rem; margin-bottom: 8px; }
+        p { color: #94A3B8; font-size: 0.9rem; margin-bottom: 20px; }
+        .upload-btn {
+            background: #0F172A;
+            border: 2px dashed #475569;
+            border-radius: 12px;
+            padding: 25px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            display: block;
+        }
+        .btn {
+            background-color: #4F46E5;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        #loading { display: none; color: #F59E0B; margin-top: 15px; font-weight: bold; }
+        .preview { margin-top: 20px; display: none; }
+        .preview img { width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #334155; }
+    </style>
+</head>
+<body>
 
+<div class="card">
+    <h1>مُرمم الصور الذكي ✨</h1>
+    <p>اختر صورة قديمة لترميمها وتلوينها</p>
+
+    <label class="upload-btn" for="fileInput">
+        📁 اضغط هنا لاختيار الصورة
+    </label>
+    <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFile(this)">
+
+    <button id="processBtn" class="btn" onclick="startProcess()" disabled>بدء الترميم 🚀</button>
+
+    <div id="loading">⏳ جاري المعالجة...</div>
+
+    <div class="preview" id="previewBox">
+        <p style="text-align: right; color: #94A3B8;">الصورة المختارة:</p>
+        <img id="imgResult" src="" alt="Result">
+    </div>
+</div>
+
+<script>
+    function handleFile(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imgResult').src = e.target.result;
+                document.getElementById('previewBox').style.display = 'block';
+                document.getElementById('processBtn').disabled = false;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function startProcess() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('processBtn').disabled = true;
+        setTimeout(() => {
+            alert("التصميم مضبوط 100% والواجهة جاهزة!");
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('processBtn').disabled = false;
+        }, 800);
+    }
+</script>
+
+</body>
+</html>
