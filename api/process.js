@@ -11,43 +11,47 @@ export default async function handler(req, res) {
     }
 
     try {
+        // استخدام نموذج CodeFormer الممتاز والموثوق لترميم الوجوه والصور القديمة
         const response = await fetch("https://api.replicate.com/v1/predictions", {
             method: "POST",
             headers: {
-                "Authorization": `Token ${token}`,
+                "Authorization": `Bearer ${token}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                version: "92836086e3c34846f513811502455e76470d041130e1357b9f08625e2e8e7a07",
+                version: "7de2ea26c616d5bf2245ad0d5e24f0ff9a6204578a5c876db731439075d496e9",
                 input: {
-                    img: image,
-                    version: "v1.4",
-                    scale: 2
+                    image: image,
+                    codeformer_fidelity: 0.7,
+                    background_enhance: true,
+                    face_upsample: true,
+                    upscale: 2
                 }
             })
         });
 
         const data = await response.json();
-        
-        // إذا تمت المعالجة فوراً أو إرجاع رابط
-        if (data.output) {
-            return res.status(200).json({ output: data.output });
-        } else if (data.urls && data.urls.get) {
-            // انتظار النتيجة إذا كانت تأخذ ثواني
-            let prediction = data;
-            while (prediction.status !== "succeeded" && prediction.status !== "failed") {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                const checkRes = await fetch(prediction.urls.get, {
-                    headers: { "Authorization": `Token ${token}` }
-                });
-                prediction = await checkRes.json();
-            }
-            if (prediction.status === "succeeded") {
-                return res.status(200).json({ output: prediction.output });
-            }
+
+        if (data.error) {
+            return res.status(400).json({ error: data.error });
         }
-        
-        return res.status(500).json({ error: 'Failed to process image' });
+
+        // الاستعلام للحصول على الصورة بعد تجهيزها
+        let prediction = data;
+        while (prediction.status !== "succeeded" && prediction.status !== "failed") {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            const checkRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            prediction = await checkRes.json();
+        }
+
+        if (prediction.status === "succeeded") {
+            return res.status(200).json({ output: prediction.output });
+        } else {
+            return res.status(500).json({ error: 'Processing failed' });
+        }
+
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
