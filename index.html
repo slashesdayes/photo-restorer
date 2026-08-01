@@ -88,14 +88,28 @@
         }
     }
 
-    function startProcess() {
+    async function startProcess() {
         document.getElementById('loading').style.display = 'block';
         document.getElementById('processBtn').disabled = true;
-        setTimeout(() => {
-            alert("التصميم مضبوط 100% والواجهة جاهزة!");
+
+        try {
+            const response = await fetch('/api/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: document.getElementById('imgResult').src })
+            });
+            const data = await response.json();
+            if (data.output) {
+                document.getElementById('imgResult').src = data.output;
+            } else {
+                alert("جاري ضبط الخدمة، حاول مرة أخرى.");
+            }
+        } catch (e) {
+            alert("حدث خطأ في الاتصال.");
+        } finally {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('processBtn').disabled = false;
-        }, 800);
+        }
     }
 </script>
 
