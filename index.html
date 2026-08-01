@@ -52,14 +52,13 @@
         #loading { display: none; color: #F59E0B; margin-top: 15px; font-weight: bold; }
         .preview { margin-top: 20px; display: none; }
         .preview img { width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #334155; }
-        canvas { display: none; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h1>مُرمم الصور الذكي ✨</h1>
-    <p>اختر صورة قديمة لترميمها وتعديل ألوانها فوراً</p>
+    <p>اختر صورة قديمة لترميم الوجوه وتوضيحها بالذكاء الاصطناعي</p>
 
     <label class="upload-btn" for="fileInput">
         📁 اضغط هنا لاختيار الصورة
@@ -68,67 +67,56 @@
 
     <button id="processBtn" class="btn" onclick="startProcess()" disabled>بدء الترميم 🚀</button>
 
-    <div id="loading">⏳ جاري ترميم وتحسين الصورة...</div>
+    <div id="loading">⏳ جاري الترميم بالذكاء الاصطناعي (قد يستغرق 5-10 ثوانٍ)...</div>
 
     <div class="preview" id="previewBox">
-        <p style="text-align: right; color: #94A3B8;">النتيجة بعد الترميم:</p>
+        <p style="text-align: right; color: #94A3B8;" id="statusText">الصورة المختارة:</p>
         <img id="imgResult" src="" alt="Result">
     </div>
-
-    <canvas id="canvas"></canvas>
 </div>
 
 <script>
-    let loadedImage = new Image();
+    let imageBase64 = "";
 
     function handleFile(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                loadedImage.src = e.target.result;
-                loadedImage.onload = function() {
-                    document.getElementById('imgResult').src = e.target.result;
-                    document.getElementById('previewBox').style.display = 'block';
-                    document.getElementById('processBtn').disabled = false;
-                }
+                imageBase64 = e.target.result;
+                document.getElementById('imgResult').src = e.target.result;
+                document.getElementById('statusText').innerText = "الصورة المختارة:";
+                document.getElementById('previewBox').style.display = 'block';
+                document.getElementById('processBtn').disabled = false;
             }
             reader.readAsDataURL(input.files[0]);
         }
     }
 
-    function startProcess() {
+    async function startProcess() {
         document.getElementById('loading').style.display = 'block';
         document.getElementById('processBtn').disabled = true;
 
-        setTimeout(() => {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
+        try {
+            const res = await fetch('/api/process', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageBase64 })
+            });
 
-            canvas.width = loadedImage.width;
-            canvas.height = loadedImage.height;
+            const data = await res.json();
 
-            // رسم الصورة الأصلية
-            ctx.drawImage(loadedImage, 0, 0);
-
-            // الحصول على بيكسلات الصورة لترميمها وتعديل التباين والألوان
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const d = imgData.data;
-
-            // خوارزمية ترميم الألوان والتوضيح المباشر
-            for (let i = 0; i < d.length; i += 4) {
-                // زيادة التباين والتوضيح (Sharpen & Enhance)
-                d[i] = Math.min(255, Math.max(0, (d[i] - 128) * 1.25 + 128 + 10));     // Red
-                d[i+1] = Math.min(255, Math.max(0, (d[i+1] - 128) * 1.25 + 128 + 10)); // Green
-                d[i+2] = Math.min(255, Math.max(0, (d[i+2] - 128) * 1.25 + 128 + 10)); // Blue
+            if (res.ok && data.output) {
+                document.getElementById('imgResult').src = data.output;
+                document.getElementById('statusText').innerText = "✨ النتيجة بعد الترميم والوضوح:";
+            } else {
+                alert("تنبيه: " + (data.error || "تعذر الترميم، تأكد من مفتاح API"));
             }
-
-            ctx.putImageData(imgData, 0, 0);
-
-            // إظهار الصورة المرممة فوراً
-            document.getElementById('imgResult').src = canvas.toDataURL('image/jpeg', 0.95);
+        } catch (e) {
+            alert("خطأ في الشبكة: " + e.message);
+        } finally {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('processBtn').disabled = false;
-        }, 600);
+        }
     }
 </script>
 
