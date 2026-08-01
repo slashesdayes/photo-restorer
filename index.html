@@ -100,12 +100,12 @@
             });
             const data = await response.json();
             if (data.output) {
-                document.getElementById('imgResult').src = data.output;
+                document.getElementById('imgResult').src = Array.isArray(data.output) ? data.output[0] : data.output;
             } else {
-                alert("جاري ضبط الخدمة، حاول مرة أخرى.");
+                alert("سبب الخطأ: " + (data.error || JSON.stringify(data)));
             }
         } catch (e) {
-            alert("حدث خطأ في الاتصال.");
+            alert("حدث خطأ في الاتصال: " + e.message);
         } finally {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('processBtn').disabled = false;
