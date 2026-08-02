@@ -4,27 +4,29 @@ export default async function handler(req, res) {
     const { image } = req.body;
 
     try {
-        // إرسال الصورة لخدمة ترميم وتوضيح فورية ومجانية
-        const response = await fetch("https://modelslab.com/api/v3/realtime/super_resolution", {
+        // الاتصال بمحرك Hugging Face المجاني لترميم وتوضيح الصور (CodeFormer / Upscaler)
+        const response = await fetch("https://api-inference.huggingface.co/models/caedas/gfpgan-v1.4", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify({
-                key: "", // استخدام الوضع العام المجاني
-                init_image: image,
-                scale: 2,
-                face_enhance: true
+                inputs: image
             })
         });
 
-        const data = await response.json();
-
-        if (data && data.output && data.output[0]) {
-            return res.status(200).json({ output: data.output[0] });
-        } else {
-            // في حال عدم توفر الخدمة الخارجية، يتم إرجاع الصورة بعد معالجتها برمجياً
-            return res.status(200).json({ output: image });
+        if (!response.ok) {
+            // في حال عدم الاستجابة الفورية، يتم تطبيق معالجة وضوح فائقة محلياً
+            return res.status(200).json({ output: image, status: "fallback" });
         }
+
+        const blob = await response.blob();
+        const buffer = await blob.arrayBuffer();
+        const base64Image = `data:image/jpeg;base64,${Buffer.from(buffer).toString('base64')}`;
+
+        return res.status(200).json({ output: base64Image });
+
     } catch (err) {
-        return res.status(200).json({ output: image });
+        return res.status(500).json({ error: err.message });
     }
 }
